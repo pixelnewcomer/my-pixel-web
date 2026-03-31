@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Retro Fix Beeper Typer</title>
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --machine-color: #95a5a6;
+            --paper-color: #f9f9f9;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 桌面工作区 */
+        #workspace {
+            width: 100%;
+            height: 70vh;
+            position: relative;
+            background: radial-gradient(circle, #34495e 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* 打字机主体 */
+        .typewriter-container {
+            width: 500px;
+            height: 250px;
+            background: var(--machine-color);
+            border-radius: 10px 10px 50px 50px;
+            position: relative;
+            box-shadow: 0 20px 0 #7f8c8d, 0 30px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            z-index: 100;
+        }
+
+        /* 出纸口 */
+        .slot {
+            width: 420px;
+            height: 10px;
+            background: #2c3e50;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        input {
+            width: 300px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #ecf0f1;
+            font-family: inherit;
+            font-size: 1.2rem;
+            outline: none;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 25px;
+            cursor: pointer;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 4px #c0392b;
+            transition: 0.1s;
+        }
+
+        button:active {
+            box-shadow: 0 0 #c0392b;
+            transform: translateY(4px);
+        }
+
+        /* 打印出的卡片 */
+        .card {
+            width: 200px;
+            min-height: 100px;
+            background: var(--paper-color);
+            padding: 15px;
+            box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            border-left: 3px solid #eee;
+            animation: printOut 2s ease-out;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        /* 模拟打字机打印动画 */
+        @keyframes printOut {
+            from {
+                transform: translateY(50px) scaleY(0);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .instruction {
+            color: #bdc3c7;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="workspace">
+        </div>
+
+    <div class="typewriter-container">
+        <div class="slot"></div>
+        <input type="text" id="textInput" placeholder="输入讯息..." maxlength="50">
+        <button onclick="printCard()">PRINT MESSAGE</button>
+        <p class="instruction">敲击打印，自由拖拽卡片</p>
+    </div>
+
+    <script>
+        const workspace = document.getElementById('workspace');
+        const input = document.getElementById('textInput');
+
+        function printCard() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 创建卡片元素
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerText = text;
+            
+            // 初始位置设定在打字机出纸口附近
+            const rect = document.querySelector('.slot').getBoundingClientRect();
+            card.style.left = (window.innerWidth / 2 - 100) + 'px';
+            card.style.top = (rect.top - 120) + 'px';
+
+            // 赋予拖拽功能
+            makeDraggable(card);
+
+            workspace.appendChild(card);
+            input.value = ''; // 清空输入
+        }
+
+        function makeDraggable(el) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            el.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                // 提升当前卡片的层级
+                el.style.zIndex = parseInt(new Date().getTime() / 1000);
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                el.style.top = (el.offsetTop - pos2) + "px";
+                el.style.left = (el.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // 回车直接触发打印
+        input.addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                printCard();
+            }
+        });
+    </script>
+</body>
+</html>
